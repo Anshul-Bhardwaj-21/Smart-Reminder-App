@@ -1,0 +1,31 @@
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+build/
+
+# Android
+android/.gradle/
+android/local.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# iOS / macOS
+ios/Pods/
+ios/Flutter/ephemeral/
+macos/Flutter/ephemeral/
+
+# Python
+__pycache__/
+*.pyc
+
+# Web build
+web/.dart_tool/
+web/build/
+
+# IDE
+.vscode/
+.idea/
+*.iml
