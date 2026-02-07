@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'core/location/geofence_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/storage_service.dart';
 import 'data/repositories/reminder_repository.dart';
@@ -34,7 +35,9 @@ Future<void> main() async {
   final reminderRepository = ReminderRepository(storageService);
   final settingsRepository = SettingsRepository(storageService);
 
-  final reminderViewModel = ReminderViewModel(reminderRepository, notificationService);
+  final geofenceService = GeofenceService();
+
+  final reminderViewModel = ReminderViewModel(reminderRepository, notificationService, geofenceService);
   await reminderViewModel.initialize();
 
   final themeViewModel = ThemeViewModel(settingsRepository);

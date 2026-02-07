@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/constants/enums.dart';
 import '../viewmodels/reminder_viewmodel.dart';
 import '../widgets/reminder_list_item.dart';
 import '../widgets/empty_state_widget.dart';
+import '../widgets/today_header.dart';
+import '../widgets/suggestion_card.dart';
 import 'add_reminder_screen.dart';
 import 'reminder_detail_screen.dart';
 import 'settings_screen.dart';
@@ -83,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           return TabBarView(
             controller: _tabController,
             children: [
-              _buildReminderList(viewModel.pendingReminders),
+              _buildPendingTab(viewModel),
               _buildReminderList(viewModel.completedReminders),
               _buildReminderList(viewModel.reminders),
             ],
@@ -138,5 +141,85 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         },
       ),
     );
+  }
+
+  Widget _buildPendingTab(ReminderViewModel viewModel) {
+    final reminders = viewModel.pendingReminders;
+    final nextReminder = _findNextUpcomingReminder(reminders);
+    final suggestions = viewModel.suggestions.take(2).toList(growable: false);
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await context.read<ReminderViewModel>().loadReminders();
+      },
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          TodayHeader(nextReminder: nextReminder),
+          const SizedBox(height: 16),
+          if (suggestions.isNotEmpty) ...[
+            ...suggestions.map(
+              (suggestion) => SuggestionCard(
+                suggestion: suggestion,
+                onPrimaryAction: () async {
+                  await viewModel.applySuggestion(suggestion);
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Suggestion applied')),
+                  );
+                },
+                onDismiss: () => viewModel.dismissSuggestion(suggestion.id),
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+          if (reminders.isEmpty)
+            const SizedBox(
+              height: 360,
+              child: EmptyStateWidget(
+                icon: Icons.event_note,
+                message: 'No reminders yet',
+                subtitle: 'Tap + to create your first reminder',
+              ),
+            )
+          else
+            ...reminders.map(
+              (reminder) => ReminderListItem(
+                reminder: reminder,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReminderDetailScreen(reminder: reminder),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  ReminderModel? _findNextUpcomingReminder(List<ReminderModel> reminders) {
+    final now = DateTime.now();
+
+    ReminderModel? next;
+    DateTime? nextTime;
+
+    for (final reminder in reminders) {
+      if (reminder.triggerType != ReminderTriggerType.time) continue;
+
+      final effectiveTime = reminder.snoozedUntil ?? reminder.dateTime;
+      if (!effectiveTime.isAfter(now)) continue;
+
+      if (nextTime == null || effectiveTime.isBefore(nextTime)) {
+        next = reminder;
+        nextTime = effectiveTime;
+      }
+    }
+
+    return next;
   }
 }

@@ -84,3 +84,37 @@ enum ReminderStatus {
     }
   }
 }
+
+/// What triggers a reminder
+enum ReminderTriggerType {
+  time('time'),
+  locationEnter('locationEnter'),
+  locationExit('locationExit');
+
+  final String storageValue;
+
+  const ReminderTriggerType(this.storageValue);
+
+  bool get isLocation => this != ReminderTriggerType.time;
+
+  String get displayName {
+    switch (this) {
+      case ReminderTriggerType.time:
+        return 'Time';
+      case ReminderTriggerType.locationEnter:
+        return 'Location (Enter)';
+      case ReminderTriggerType.locationExit:
+        return 'Location (Exit)';
+    }
+  }
+
+  static ReminderTriggerType fromStorageValue(String? value) {
+    if (value == null) return ReminderTriggerType.time;
+
+    for (final type in ReminderTriggerType.values) {
+      if (type.storageValue == value) return type;
+    }
+
+    return ReminderTriggerType.time;
+  }
+}

@@ -15,6 +15,9 @@ dependencies:
   # State Management
   provider: ^6.1.1
 
+  # Voice Input (on-device speech recognition)
+  speech_to_text: ^6.6.2
+
   # Local Storage
   hive: ^2.2.3
   hive_flutter: ^1.1.0
@@ -29,6 +32,8 @@ dependencies:
 
   # UI
   cupertino_icons: ^1.0.6
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:

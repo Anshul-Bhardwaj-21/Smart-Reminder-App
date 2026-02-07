@@ -17,6 +17,7 @@ class ReminderDetailScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final priorityColor = AppTheme.getPriorityColor(reminder.priority);
     final isActive = reminder.status == ReminderStatus.pending || reminder.status == ReminderStatus.snoozed;
+    final isLocationReminder = reminder.triggerType.isLocation && reminder.location != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -68,18 +69,46 @@ class ReminderDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildInfoCard(
-            context,
-            icon: Icons.calendar_today,
-            title: 'Date',
-            value: DateTimeUtils.formatDate(reminder.dateTime),
-          ),
-          _buildInfoCard(
-            context,
-            icon: Icons.access_time,
-            title: 'Time',
-            value: DateTimeUtils.formatTime(reminder.dateTime),
-          ),
+          if (!isLocationReminder) ...[
+            _buildInfoCard(
+              context,
+              icon: Icons.calendar_today,
+              title: 'Date',
+              value: DateTimeUtils.formatDate(reminder.dateTime),
+            ),
+            _buildInfoCard(
+              context,
+              icon: Icons.access_time,
+              title: 'Time',
+              value: DateTimeUtils.formatTime(reminder.dateTime),
+            ),
+          ] else ...[
+            _buildInfoCard(
+              context,
+              icon: Icons.place,
+              title: 'Trigger',
+              value: reminder.triggerType.displayName,
+            ),
+            _buildInfoCard(
+              context,
+              icon: Icons.location_on,
+              title: 'Location',
+              value: reminder.location!.name,
+            ),
+            _buildInfoCard(
+              context,
+              icon: Icons.my_location,
+              title: 'Radius',
+              value: '${reminder.location!.radiusMeters.round()} meters',
+            ),
+            _buildInfoCard(
+              context,
+              icon: Icons.pin_drop,
+              title: 'Coordinates',
+              value:
+                  '${reminder.location!.latitude.toStringAsFixed(5)}, ${reminder.location!.longitude.toStringAsFixed(5)}',
+            ),
+          ],
           _buildInfoCard(
             context,
             icon: Icons.flag,
@@ -87,12 +116,13 @@ class ReminderDetailScreen extends StatelessWidget {
             value: reminder.priority.displayName,
             color: priorityColor,
           ),
-          _buildInfoCard(
-            context,
-            icon: Icons.repeat,
-            title: 'Recurrence',
-            value: reminder.recurrence.displayName,
-          ),
+          if (!isLocationReminder)
+            _buildInfoCard(
+              context,
+              icon: Icons.repeat,
+              title: 'Recurrence',
+              value: reminder.recurrence.displayName,
+            ),
           _buildInfoCard(
             context,
             icon: Icons.info,

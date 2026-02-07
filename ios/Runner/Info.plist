@@ -47,5 +47,19 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Smart Reminder needs microphone access to create reminders using your voice.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Smart Reminder uses speech recognition to transcribe your voice into reminder text.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Smart Reminder uses your location to trigger reminders when you arrive or leave places.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Allow Smart Reminder to access your location "Always" so location reminders can trigger in the background.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Allow Smart Reminder to access your location so location reminders can trigger reliably.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

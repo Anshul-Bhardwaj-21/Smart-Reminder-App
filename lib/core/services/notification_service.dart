@@ -150,6 +150,10 @@ class NotificationService {
       return;
     }
 
+    if (reminder.triggerType != reminder_enums.ReminderTriggerType.time) {
+      return;
+    }
+
     if (reminder.status == reminder_enums.ReminderStatus.completed ||
         reminder.status == reminder_enums.ReminderStatus.cancelled) {
       return;

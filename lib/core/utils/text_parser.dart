@@ -11,6 +11,7 @@ class TextParser {
   static ParsedReminder parseReminderText(String input) {
     final cleanInput = input.trim().toLowerCase();
 
+    final locationResult = _extractLocation(cleanInput);
     final recurrenceResult = _extractRecurrence(cleanInput);
 
     return ParsedReminder(
@@ -19,6 +20,8 @@ class TextParser {
       recurrence: recurrenceResult.recurrence,
       customRecurrenceDays: recurrenceResult.customDays,
       priority: _extractPriority(cleanInput),
+      triggerType: locationResult.triggerType,
+      locationName: locationResult.locationName,
     );
   }
 
@@ -175,6 +178,81 @@ class TextParser {
     }
     return Priority.medium;
   }
+
+  static _LocationResult _extractLocation(String input) {
+    final hasExitIntent = RegExp(r'\b(leave|exit)\b').hasMatch(input);
+    final hasEnterIntent = RegExp(r'\b(reach|arrive|near)\b').hasMatch(input);
+
+    if (!hasExitIntent && !hasEnterIntent) {
+      return const _LocationResult(ReminderTriggerType.time, null);
+    }
+
+    final triggerType =
+        hasExitIntent ? ReminderTriggerType.locationExit : ReminderTriggerType.locationEnter;
+
+    final locationName = _extractLocationName(input, triggerType);
+    return _LocationResult(triggerType, locationName);
+  }
+
+  static String? _extractLocationName(String input, ReminderTriggerType triggerType) {
+    final patterns = <RegExp>[
+      if (triggerType == ReminderTriggerType.locationEnter)
+        RegExp(r'\b(?:arrive|reach)\b(?:\s+(?:at|to|in|near))?\s+(.+)$'),
+      if (triggerType == ReminderTriggerType.locationEnter) RegExp(r'\bnear\b\s+(.+)$'),
+      if (triggerType == ReminderTriggerType.locationExit)
+        RegExp(r'\b(?:leave|exit)\b(?:\s+(?:from))?\s+(.+)$'),
+    ];
+
+    for (final pattern in patterns) {
+      final match = pattern.firstMatch(input);
+      if (match == null) continue;
+
+      final captured = match.group(1);
+      if (captured == null || captured.trim().isEmpty) continue;
+
+      final cleaned = _cleanLocationName(captured);
+      if (cleaned != null) return cleaned;
+    }
+
+    return null;
+  }
+
+  static String? _cleanLocationName(String value) {
+    var name = value.trim();
+    if (name.isEmpty) return null;
+
+    final stopPatterns = <RegExp>[
+      RegExp(r'\b(at|on|today|tomorrow|tonight)\b'),
+      RegExp(r'\b(every day|daily|every week|weekly|every month|monthly)\b'),
+      RegExp(r'\b(every\s+\d+\s+days?)\b'),
+      RegExp(r'\b(urgent|important|high priority|low priority|normal)\b'),
+      RegExp(r'\b\d{1,2}:\d{2}\s*(am|pm)?\b'),
+      RegExp(r'\b\d{1,2}\s*(am|pm)\b'),
+      RegExp(r'\b\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?\b'),
+    ];
+
+    var cutIndex = name.length;
+    for (final pattern in stopPatterns) {
+      final match = pattern.firstMatch(name);
+      if (match != null && match.start < cutIndex) {
+        cutIndex = match.start;
+      }
+    }
+
+    if (cutIndex != name.length) {
+      name = name.substring(0, cutIndex).trim();
+    }
+
+    name = name.replaceAll(RegExp(r'^[\s,;:]+'), '').replaceAll(RegExp(r'[\s,;:.!?]+$'), '').trim();
+
+    if (name.startsWith('the ')) {
+      name = name.substring(4).trim();
+    }
+
+    if (name.isEmpty) return null;
+
+    return name[0].toUpperCase() + name.substring(1);
+  }
 }
 
 class _RecurrenceResult {
@@ -184,6 +262,13 @@ class _RecurrenceResult {
   const _RecurrenceResult(this.recurrence, this.customDays);
 }
 
+class _LocationResult {
+  final ReminderTriggerType triggerType;
+  final String? locationName;
+
+  const _LocationResult(this.triggerType, this.locationName);
+}
+
 /// Result of parsing reminder text
 class ParsedReminder {
   final String title;
@@ -191,6 +276,8 @@ class ParsedReminder {
   final RecurrenceType recurrence;
   final int? customRecurrenceDays;
   final Priority priority;
+  final ReminderTriggerType triggerType;
+  final String? locationName;
 
   ParsedReminder({
     required this.title,
@@ -198,5 +285,7 @@ class ParsedReminder {
     required this.recurrence,
     required this.customRecurrenceDays,
     required this.priority,
+    this.triggerType = ReminderTriggerType.time,
+    this.locationName,
   });
 }
